@@ -2,6 +2,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, Static, Input
 from textual.containers import Container, Horizontal
 from textual.reactive import reactive
+from textual.message import Message
 import psutil
 import time
 import threading
@@ -10,6 +11,7 @@ class ChatLog(Static):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.log_content = ""
+        self.auto_scroll = True
 
     def append_message(self, msg: str, sender="Jarvis"):
         sender_lower = sender.lower()
@@ -28,6 +30,10 @@ class ChatLog(Static):
 
         self.log_content += f"{prefix}{msg}\n\n"
         self.update(self.log_content)
+        
+        # Auto-scroll hacia abajo
+        if self.auto_scroll:
+            self.scroll_end(animate=False)
 
 class InfoPanel(Static):
     cpu = reactive(0.0)
@@ -97,11 +103,39 @@ class JarvisApp(App):
 
     BINDINGS = [("ctrl+c", "quit", "Quit")]
 
+    # Definir eventos personalizados
+    class MessageEvent(Message):
+        def __init__(self, text: str, sender: str = "Jarvis"):
+            super().__init__()
+            self.text = text
+            self.sender = sender
+
+    class MicStatusEvent(Message):
+        def __init__(self, active: bool):
+            super().__init__()
+            self.active = active
+
+    class TTSEngineEvent(Message):
+        def __init__(self, name: str):
+            super().__init__()
+            self.name = name
+
+    class AIEngineEvent(Message):
+        def __init__(self, name: str):
+            super().__init__()
+            self.name = name
+
+    class MemoryInfoEvent(Message):
+        def __init__(self, memory_entries: int, corrections: int):
+            super().__init__()
+            self.memory_entries = memory_entries
+            self.corrections = corrections
+
     def __init__(self):
         super().__init__()
         self.start_time = time.time()
         self._is_ready = False
-        self.on_user_input_callback = None  # <-- Aquí conectaremos desde ui_bridge.py
+        self.on_user_input_callback = None
         self.chat_log = None
 
     @property
@@ -127,7 +161,7 @@ class JarvisApp(App):
     def on_mount(self):
         self.set_interval(1, self.refresh_stats)
         self.chat_log.append_message("Jarvis ready. Say 'Oye Jarvis' or type a command.", sender="System")
-        self.set_focus(self.input_field)  # ✅ Cursor listo
+        self.set_focus(self.input_field)
         self._is_ready = True
 
     def refresh_stats(self):
@@ -150,7 +184,33 @@ class JarvisApp(App):
             else:
                 self.chat_log.append_message("⚠️ No handler for input!", sender="System")
 
-    # Métodos externos
+    # Manejar eventos personalizados
+    def on_message_event(self, event: MessageEvent):
+        """Maneja eventos de mensajes desde hilos externos"""
+        try:
+            if self.chat_log:
+                self.chat_log.append_message(event.text, event.sender)
+                # Forzar actualización de pantalla
+                self.refresh()
+        except Exception as e:
+            # Fallback si falla
+            if hasattr(self, 'chat_log'):
+                self.chat_log.append_message(f"Error displaying message: {e}", "Error")
+
+    def on_mic_status_event(self, event: MicStatusEvent):
+        self.info_panel.mic_status = event.active
+
+    def on_tts_engine_event(self, event: TTSEngineEvent):
+        self.info_panel.tts_engine = event.name
+
+    def on_ai_engine_event(self, event: AIEngineEvent):
+        self.info_panel.ai_engine = event.name
+
+    def on_memory_info_event(self, event: MemoryInfoEvent):
+        self.info_panel.memory_entries = event.memory_entries
+        self.info_panel.corrections = event.corrections
+
+    # Métodos externos (mantenidos para compatibilidad)
     def append_message(self, msg, sender="Jarvis"):
         if self.chat_log:
             self.chat_log.append_message(msg, sender)
@@ -169,7 +229,7 @@ class JarvisApp(App):
         self.info_panel.corrections = corrections
 
     def get_user_input(self):
-        return None  # Puedes extender si deseas uso activo
+        return None
 
 if __name__ == "__main__":
     JarvisApp().run()
