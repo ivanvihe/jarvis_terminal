@@ -1,1 +1,14 @@
 config.json
+__pycache__/ai.cpython-313.pyc
+__pycache__/config_loader.cpython-313.pyc
+__pycache__/corrections.cpython-313.pyc
+__pycache__/integrations_manager.cpython-313.pyc
+__pycache__/jarvis_ui.cpython-313.pyc
+__pycache__/memory.cpython-313.pyc
+__pycache__/stt.cpython-313.pyc
+__pycache__/tts.cpython-313.pyc
+__pycache__/ui_bridge.cpython-313.pyc
+*.wav
+.env
+integrations/__pycache__/gmail.cpython-313.pyc
+integrations/__pycache__/windows_run.cpython-313.pyc

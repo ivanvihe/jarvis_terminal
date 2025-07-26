@@ -12,7 +12,6 @@ class UIBridge:
         self.ready = False
 
         # No lanzamos app.run() aquí, dejamos que quien use UIBridge lo haga
-        # Solo esperamos a que UI esté lista
         threading.Thread(target=self._wait_ready, daemon=True).start()
 
     def _wait_ready(self):
@@ -22,12 +21,9 @@ class UIBridge:
 
     def _handle_input(self, text):
         """Este método se llama cuando el usuario envía texto desde la UI"""
-        # En lugar de solo añadir a la cola, procesamos directamente
         if hasattr(self, 'jarvis_agent') and self.jarvis_agent:
-            # Procesar el comando directamente
             threading.Thread(target=self._process_user_command, args=(text,), daemon=True).start()
         else:
-            # Fallback: añadir a la cola para compatibilidad
             self.input_queue.append(text)
 
     def _process_user_command(self, text):
@@ -38,16 +34,15 @@ class UIBridge:
                 import os
                 os._exit(0)
             else:
-                # Procesar como comando normal
                 if hasattr(self.jarvis_agent, 'process_text_command'):
-                    self.jarvis_agent.process_text_command(text)  # Método específico para texto
+                    self.jarvis_agent.process_text_command(text)
                 else:
                     self.jarvis_agent.process_command(text)
         except Exception as e:
             self.send_message(f"❌ Error procesando comando: {e}", sender="Error")
 
     def set_jarvis_agent(self, agent):
-        """Establece la referencia al agente para procesamiento directo"""
+        """Establece la referencia al agente"""
         self.jarvis_agent = agent
 
     def get_user_input(self):
@@ -56,17 +51,12 @@ class UIBridge:
         return None
 
     def send_message(self, msg, sender="Jarvis"):
-        if self.ready and msg.strip():  # Verificar que el mensaje no esté vacío
+        if self.ready and msg.strip():
             try:
-                # Usar post_message en lugar de call_from_thread
                 self.app.post_message(self.app.MessageEvent(msg, sender))
-                
-                # FALLBACK: También probar método directo
                 if hasattr(self.app, 'append_message'):
                     self.app.call_from_thread(self.app.append_message, msg, sender)
-                    
             except Exception as e:
-                # Último recurso: print directo (aunque se pierda)
                 print(f"ERROR enviando mensaje a UI: {e}")
                 print(f"Mensaje perdido: [{sender}] {msg}")
         elif not self.ready:
@@ -89,3 +79,11 @@ class UIBridge:
     def update_memory_info(self, memory_entries, corrections):
         if self.ready:
             self.app.post_message(self.app.MemoryInfoEvent(memory_entries, corrections))
+
+    def show_integrations(self, capabilities_dict):
+        """Muestra en la UI las integraciones activas y sus capacidades"""
+        if self.ready:
+            try:
+                self.app.post_message(self.app.IntegrationsEvent(capabilities_dict))
+            except Exception as e:
+                print(f"⚠️ Error enviando IntegrationsEvent: {e}")
