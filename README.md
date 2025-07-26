@@ -34,7 +34,7 @@ Un asistente de IA personal para tu terminal, inspirado en Jarvis. Combina una i
 ### 1. Clonar el Repositorio
 
 ```bash
-git clone https://github.com/your-username/jarvis_terminal.git
+git clone https://github.com/ivanvihe/jarvis_terminal.git
 cd jarvis_terminal
 ```
 
