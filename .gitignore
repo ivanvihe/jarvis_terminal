@@ -15,3 +15,7 @@ __pycache__/ui_bridge.cpython-313.pyc
 integrations/__pycache__/gmail.cpython-313.pyc
 integrations/__pycache__/windows_run.cpython-313.pyc
 integrations/__pycache__/windows_session.cpython-313.pyc
+__pycache__/config_display.cpython-313.pyc
+__pycache__/config_reloader.cpython-313.pyc
+__pycache__/events_core.cpython-313.pyc
+listeners/__pycache__/config_reloader.cpython-313.pyc

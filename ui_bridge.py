@@ -37,7 +37,7 @@ class UIBridge:
                 if hasattr(self.jarvis_agent, 'process_text_command'):
                     self.jarvis_agent.process_text_command(text)
                 else:
-                    self.jarvis_agent.process_command(text)
+                    self.jarvis_agent.process_command(text, from_voice=False)
         except Exception as e:
             self.send_message(f"❌ Error procesando comando: {e}", sender="Error")
 
@@ -51,41 +51,71 @@ class UIBridge:
         return None
 
     def send_message(self, msg, sender="Jarvis"):
+        """Envía mensaje a la interfaz de manera thread-safe"""
         if self.ready and msg.strip():
             try:
+                # Usar el sistema de eventos para thread-safety
                 self.app.post_message(self.app.MessageEvent(msg, sender))
-                if hasattr(self.app, 'append_message'):
-                    self.app.call_from_thread(self.app.append_message, msg, sender)
             except Exception as e:
                 print(f"ERROR enviando mensaje a UI: {e}")
                 print(f"Mensaje perdido: [{sender}] {msg}")
         elif not self.ready:
             print(f"UI not ready, message lost: [{sender}] {msg}")
-        else:
-            print(f"Empty message ignored: [{sender}] '{msg}'")
 
     def set_mic_status(self, active: bool):
+        """Establece el estado del micrófono"""
         if self.ready:
-            self.app.post_message(self.app.MicStatusEvent(active))
+            try:
+                self.app.post_message(self.app.MicStatusEvent(active))
+            except Exception as e:
+                print(f"Error setting mic status: {e}")
 
     def set_tts_engine(self, name: str):
+        """Establece el nombre del motor TTS"""
         if self.ready:
-            self.app.post_message(self.app.TTSEngineEvent(name))
+            try:
+                self.app.post_message(self.app.TTSEngineEvent(name))
+            except Exception as e:
+                print(f"Error setting TTS engine: {e}")
 
     def set_ai_engine(self, name: str):
+        """Establece el nombre del motor AI"""
         if self.ready:
-            self.app.post_message(self.app.AIEngineEvent(name))
+            try:
+                self.app.post_message(self.app.AIEngineEvent(name))
+            except Exception as e:
+                print(f"Error setting AI engine: {e}")
 
     def update_memory_info(self, memory_entries, corrections):
+        """Actualiza la información de memoria y correcciones"""
         if self.ready:
-            self.app.post_message(self.app.MemoryInfoEvent(memory_entries, corrections))
+            try:
+                self.app.post_message(self.app.MemoryInfoEvent(memory_entries, corrections))
+            except Exception as e:
+                print(f"Error updating memory info: {e}")
 
     def show_integrations(self, capabilities_dict):
         """Muestra integraciones activas en el sidebar"""
         if self.ready:
             try:
-                names = list(capabilities_dict.keys())
-                integrations_str = "\n".join(f"• {name}" for name in names) if names else "Ninguna"
+                if isinstance(capabilities_dict, dict):
+                    integrations_lines = []
+                    for name, capabilities in capabilities_dict.items():
+                        # Usar formato similar al config_display
+                        status = "✅" if capabilities else "❌"
+                        caps_str = ", ".join(capabilities[:2]) if capabilities else "Sin capacidades"
+                        if len(capabilities) > 2:
+                            caps_str += f" (+{len(capabilities)-2} más)"
+                        integrations_lines.append(f"{status} [bold]{name}[/bold]")
+                        integrations_lines.append(f"   {caps_str}")
+                    
+                    integrations_str = "\n".join(integrations_lines) if integrations_lines else "[dim]Ninguna activa[/dim]"
+                else:
+                    # Si se pasa directamente un string (para compatibilidad)
+                    integrations_str = str(capabilities_dict) if capabilities_dict else "[dim]Ninguna activa[/dim]"
+                
                 self.app.post_message(self.app.IntegrationsEvent(integrations_str))
             except Exception as e:
                 print(f"⚠️ Error enviando IntegrationsEvent: {e}")
+                # Fallback
+                self.app.post_message(self.app.IntegrationsEvent("[red]Error cargando integraciones[/red]"))
