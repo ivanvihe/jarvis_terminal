@@ -78,62 +78,92 @@ Debes crear un archivo llamado `config.json` en la raíz del proyecto. Este arch
 
 ```json
 {
-  "voice_input_enabled": true,           // Habilita/deshabilita entrada por voz
-  "sample_rate": 16000,                  // Frecuencia de muestreo de audio (Hz)
-  "volume_threshold": 0.08,              // Umbral de volumen para detectar voz
+  "debug_ai": false,                    // Activa logs de depuración para IA
+  "debug_tts": false,                   // Activa logs de depuración para TTS
+  "debug_stt": false,                   // Activa logs de depuración para STT
+  "voice_input_enabled": true,          // Habilita/deshabilita entrada por voz
+  "sample_rate": 16000,                 // Frecuencia de muestreo de audio (Hz)
+  "channels": 1,                        // Número de canales de audio (1=mono, 2=stereo)
+  "volume_threshold": 0.08,             // Umbral de volumen para detectar voz
+  "vad_mode": "simple",                // Modo de detección de voz: "simple" o avanzado
   "wake_words": ["oye jarvis", "hey jarvis", "jarvis"], // Palabras de activación
-  "whisper_model_size": "small",        // Tamaño del modelo Whisper: "tiny", "base", "small", "medium", "large-v3"
-  "use_gpu": true,                       // Usa GPU si está disponible
-  "tts": "local",                       // "local" (pyttsx3) o "elevenlabs"
-  "ai_provider": "groq",                // "groq", "openai", "gemini", "claude"
-  "debug_ai": false,                     // Modo debug para IA
-  "debug_tts": false,                    // Modo debug para TTS
-  "debug_stt": false,                    // Modo debug para STT
-  "silence_duration": 1.5,               // Segundos de silencio para finalizar grabación
+  "wake_word": "jarvis",               // Palabra de activación principal
+  "wake_duration": 4,                   // Duración máxima (segundos) para escuchar la palabra de activación
+  "command_duration": 8,                // Duración máxima (segundos) para escuchar el comando tras la activación
+  "interactive_mode_duration": 10,      // Tiempo (segundos) en modo interactivo tras activación
+  "whisper_model_size": "small",       // Tamaño del modelo Whisper: "tiny", "base", "small", "medium", "large-v3"
+  "use_gpu": true,                      // Usa GPU si está disponible
+  "speech_threshold_multiplier": 1.5,   // Multiplicador para el umbral de detección de voz
+  "silence_duration": 2.5,              // Segundos de silencio para finalizar grabación
+  "min_recording_duration": 1.0,        // Duración mínima de grabación (segundos)
+  "min_file_size": 1000,                // Tamaño mínimo del archivo de audio (bytes)
+  "whisper_no_speech_threshold": 0.6,   // Umbral de no-speech para Whisper
+  "whisper_temperature": 0.0,           // Temperatura para la transcripción de Whisper
+
+  "ai_provider": "groq",               // "groq", "openai", "gemini", "claude"
+  "tts": "local",                      // "local" (pyttsx3) o "elevenlabs"
+
+  "groq_api_key": "...",
+  "openai_api_key": "...",
+  "gemini_api_key": "...",
+  "claude_api_key": "...",
 
   "elevenlabs": {
-    "api_key": "TU_API_KEY_DE_ELEVENLABS", // Solo si usas ElevenLabs
-    "voice_id": "ID_DE_LA_VOZ_QUE_QUIERES_USAR"
+    "api_key": "...",                  // Solo si usas ElevenLabs
+    "voice_id": "..."
   },
 
   "local_tts": {
-    "voice": "helena",                  // Nombre de la voz local (depende del sistema)
-    "rate": 180                          // Velocidad de la voz
+    "voice": "Helena",                 // Nombre de la voz local (depende del sistema)
+    "rate": 180                         // Velocidad de la voz
   },
 
-  "groq_api_key": "TU_API_KEY_DE_GROQ",     // Solo si usas Groq
-  "openai_api_key": "TU_API_KEY_DE_OPENAI", // Solo si usas OpenAI
-  "gemini_api_key": "TU_API_KEY_DE_GEMINI", // Solo si usas Gemini
-  "claude_api_key": "TU_API_KEY_DE_CLAUDE"  // Solo si usas Claude
+  "integrations": {
+    "gmail": {
+      "enabled": false,
+      "type": "mcp",
+      "mcp_server": {
+        "command": "python",
+        "args": ["-m", "mcp_gmail_server"],
+        "env": {
+          "GMAIL_CREDENTIALS": "credentials.json"
+        }
+      },
+      "capabilities": ["email", "send mail", "read mail", "check inbox"],
+      "keywords": ["correo", "email", "gmail", "enviar mensaje"]
+    },
+    "alexa": {
+      "enabled": false,
+      "type": "api",
+      "api_config": {
+        "skill_id": "...",
+        "client_id": "...",
+        "client_secret": "..."
+      },
+      "capabilities": ["smart home", "alexa", "control devices"],
+      "keywords": ["alexa", "luces", "dispositivos", "casa inteligente"]
+    },
+    "windows_run": {
+      "enabled": true,
+      "type": "simple",
+      "apps": {
+        "emule": "C:\\Program Files (x86)\\eMule\\emule.exe"
+      },
+      "capabilities": ["abrir", "ejecutar", "lanzar", "inicia", "run", "open"],
+      "keywords": ["emule", "notepad", "firefox"]
+    },
+    "windows_session": { "enabled": true, "type": "simple" }
+  }
 }
 ```
 
-**Notas importantes:**
-- Rellena las claves API solo para los servicios que vayas a usar.
-- Elige el proveedor de IA y TTS según tus preferencias.
-- Puedes personalizar las palabras de activación y otros parámetros para adaptarlo a tu entorno.
-
-#### Archivo `memory.json` (Obligatorio)
-
-Este archivo almacena la memoria persistente de Jarvis (recuerdos, historial, etc). Si no existe, Jarvis lo creará automáticamente, pero puedes inicializarlo vacío:
-
-```json
-[]
-```
-
-#### Archivo `corrections.json` (Obligatorio)
-
-Define correcciones personalizadas para mejorar la transcripción de voz. Si no existe, Jarvis lo creará automáticamente, pero puedes inicializarlo así:
-
-```json
-{
-  "faster whisper": "faster-whisper",
-  "textualais": "textualize",
-  "grook": "groq"
-}
-```
-
-Puedes añadir tantas correcciones como necesites. La clave es el texto incorrecto y el valor el texto correcto.
+**Notas sobre parámetros avanzados:**
+- `channels`: 1 para mono, 2 para estéreo (normalmente 1).
+- `vad_mode`: "simple" o puedes implementar otros modos si amplías el sistema.
+- `wake_duration` y `command_duration`: controlan los tiempos máximos de escucha.
+- `interactive_mode_duration`: tiempo de espera en modo interactivo tras la activación.
+- `speech_threshold_multiplier`, `min_recording_duration`, `min_file_size`, `whisper_no_speech_threshold`, `whisper_temperature`: parámetros avanzados para ajustar la sensibilidad y calidad del reconocimiento de voz.
+- `integrations`: permite definir integraciones externas (Gmail, Alexa, Windows, etc.) con sus propios parámetros.
 
 ## ▶️ Uso
 
