@@ -47,10 +47,15 @@ python -m venv venv
 source venv/bin/activate  # En Windows: venv\Scripts\activate
 ```
 
-Luego, instala las dependencias necesarias. Puedes crear un archivo `requirements.txt` con el siguiente contenido y ejecutar `pip install -r requirements.txt`:
+Luego, instala las dependencias necesarias:
+
+```bash
+pip install -r requirements.txt
+```
+
+El archivo `requirements.txt` debe contener:
 
 ```txt
-# requirements.txt
 requests
 pyttsx3
 faster-whisper
@@ -65,54 +70,60 @@ psutil
 
 *Nota sobre `pyaudio`*: En Linux, puede que necesites instalar `portaudio` primero: `sudo apt-get install portaudio19-dev`.
 
-### 3. Crear el archivo `config.json`
+### 3. Configuración de Archivos Necesarios
 
-Crea un archivo llamado `config.json` en la raíz del proyecto. Puedes usar este ejemplo como plantilla y modificarlo según tus necesidades.
+#### Archivo `config.json` (Obligatorio)
+
+Debes crear un archivo llamado `config.json` en la raíz del proyecto. Este archivo controla el comportamiento de Jarvis. Ejemplo y explicación de cada parámetro:
 
 ```json
 {
-  "voice_input_enabled": true,
-  "sample_rate": 16000,
-  "volume_threshold": 0.08,
-  "wake_words": ["oye jarvis", "hey jarvis", "jarvis"],
-  "whisper_model_size": "small",
-  "use_gpu": true,
-  "tts": "local",
-  "ai_provider": "groq",
-  "debug_ai": false,
-  "debug_tts": false,
-  "debug_stt": false,
-  "silence_duration": 1.5,
+  "voice_input_enabled": true,           // Habilita/deshabilita entrada por voz
+  "sample_rate": 16000,                  // Frecuencia de muestreo de audio (Hz)
+  "volume_threshold": 0.08,              // Umbral de volumen para detectar voz
+  "wake_words": ["oye jarvis", "hey jarvis", "jarvis"], // Palabras de activación
+  "whisper_model_size": "small",        // Tamaño del modelo Whisper: "tiny", "base", "small", "medium", "large-v3"
+  "use_gpu": true,                       // Usa GPU si está disponible
+  "tts": "local",                       // "local" (pyttsx3) o "elevenlabs"
+  "ai_provider": "groq",                // "groq", "openai", "gemini", "claude"
+  "debug_ai": false,                     // Modo debug para IA
+  "debug_tts": false,                    // Modo debug para TTS
+  "debug_stt": false,                    // Modo debug para STT
+  "silence_duration": 1.5,               // Segundos de silencio para finalizar grabación
 
   "elevenlabs": {
-    "api_key": "TU_API_KEY_DE_ELEVENLABS",
+    "api_key": "TU_API_KEY_DE_ELEVENLABS", // Solo si usas ElevenLabs
     "voice_id": "ID_DE_LA_VOZ_QUE_QUIERES_USAR"
   },
 
   "local_tts": {
-    "voice": "helena",
-    "rate": 180
+    "voice": "helena",                  // Nombre de la voz local (depende del sistema)
+    "rate": 180                          // Velocidad de la voz
   },
 
-  "groq_api_key": "TU_API_KEY_DE_GROQ",
-  "openai_api_key": "TU_API_KEY_DE_OPENAI",
-  "gemini_api_key": "TU_API_KEY_DE_GEMINI",
-  "claude_api_key": "TU_API_KEY_DE_CLAUDE"
+  "groq_api_key": "TU_API_KEY_DE_GROQ",     // Solo si usas Groq
+  "openai_api_key": "TU_API_KEY_DE_OPENAI", // Solo si usas OpenAI
+  "gemini_api_key": "TU_API_KEY_DE_GEMINI", // Solo si usas Gemini
+  "claude_api_key": "TU_API_KEY_DE_CLAUDE"  // Solo si usas Claude
 }
 ```
 
-**Explicación de claves importantes:**
-- `ai_provider`: Elige entre `"groq"`, `"openai"`, `"gemini"`, `"claude"`.
-- `tts`: Elige entre `"local"` o `"elevenlabs"`.
-- `whisper_model_size`: Modelos disponibles: `"tiny"`, `"base"`, `"small"`, `"medium"`, `"large-v3"`. Modelos más grandes son más precisos pero más lentos y consumen más recursos.
-- `use_gpu`: Ponlo en `true` si tienes una GPU NVIDIA compatible y has instalado la versión correcta de `torch`.
-- Rellena las claves API (`..._api_key`) para los servicios que quieras usar.
+**Notas importantes:**
+- Rellena las claves API solo para los servicios que vayas a usar.
+- Elige el proveedor de IA y TTS según tus preferencias.
+- Puedes personalizar las palabras de activación y otros parámetros para adaptarlo a tu entorno.
 
-### 4. (Opcional) Crear `corrections.json`
+#### Archivo `memory.json` (Obligatorio)
 
-Si notas que el reconocimiento de voz falla consistentemente con ciertas palabras (por ejemplo, nombres propios o términos técnicos), puedes crear un archivo `corrections.json` para solucionarlo.
+Este archivo almacena la memoria persistente de Jarvis (recuerdos, historial, etc). Si no existe, Jarvis lo creará automáticamente, pero puedes inicializarlo vacío:
 
-Ejemplo de `corrections.json`:
+```json
+[]
+```
+
+#### Archivo `corrections.json` (Obligatorio)
+
+Define correcciones personalizadas para mejorar la transcripción de voz. Si no existe, Jarvis lo creará automáticamente, pero puedes inicializarlo así:
 
 ```json
 {
@@ -121,7 +132,8 @@ Ejemplo de `corrections.json`:
   "grook": "groq"
 }
 ```
-El sistema reemplazará automáticamente la clave (texto incorrecto) por el valor (texto correcto) en la transcripción.
+
+Puedes añadir tantas correcciones como necesites. La clave es el texto incorrecto y el valor el texto correcto.
 
 ## ▶️ Uso
 
@@ -132,17 +144,22 @@ python jarvis.py
 ```
 
 - **Para hablar**: Di la palabra de activación (p. ej., "Oye Jarvis") seguida de tu comando.
-- **Para escribir**: Simplemente escribe tu comando en el campo de entrada en la parte inferior de la pantalla y presiona Enter.
+- **Para escribir**: Simplemente escribe tu comando en la parte inferior de la pantalla y presiona Enter.
 - **Para salir**: Escribe `salir` o `adios`, o presiona `Ctrl+C`.
 
 ## 🏗️ Estructura del Proyecto
 
 - `jarvis.py`: El punto de entrada principal. Orquesta la inicialización y los bucles de entrada.
-- `ai.py`: Contiene la lógica para comunicarse con las diferentes APIs de los proveedores de IA.
-- `stt.py`: Gestiona la grabación de audio y la transcripción con `faster-whisper`.
-- `tts.py`: Gestiona la síntesis de voz para el motor local o ElevenLabs.
-- `jarvis_ui.py`: Define la interfaz de usuario con `textual`.
-- `ui_bridge.py`: Actúa como un puente para comunicar de forma segura entre el backend (Jarvis) y el frontend (la TUI).
-- `config_loader.py`: Carga y proporciona acceso a los valores de `config.json`.
-- `memory.py`: Implementa la clase `Memory` para cargar y guardar el historial de la conversación.
+- `ai.py`: Lógica para comunicarse con las diferentes APIs de los proveedores de IA.
+- `stt.py`: Grabación de audio y transcripción con `faster-whisper`.
+- `tts.py`: Síntesis de voz para el motor local o ElevenLabs.
+- `jarvis_ui.py`: Interfaz de usuario con `textual`.
+- `ui_bridge.py`: Puente entre backend (Jarvis) y frontend (TUI).
+- `config_loader.py`: Carga y acceso a los valores de `config.json`.
+- `memory.py`: Clase `Memory` para cargar y guardar el historial de la conversación.
 - `corrections.py`: Carga y aplica las correcciones del archivo `corrections.json`.
+- `integrations/`: Integraciones adicionales (ej. Gmail, Windows, etc).
+
+---
+
+**¡Listo! Jarvis Terminal está preparado para ser tu asistente personal en la terminal.**
