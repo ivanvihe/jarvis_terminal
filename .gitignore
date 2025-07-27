@@ -1,4 +1,6 @@
 config.json
+memory.json
+corrections.json
 __pycache__/ai.cpython-313.pyc
 __pycache__/config_loader.cpython-313.pyc
 __pycache__/corrections.cpython-313.pyc
