@@ -44,9 +44,11 @@ class InfoPanel(Static):
     corrections = reactive(0)
     mic_status = reactive(False)
     uptime = reactive("0s")
+    integrations = reactive("")
 
     def render_info(self):
         mic_icon = "🎙️ ON" if self.mic_status else "🎙️ OFF"
+        integrations_display = self.integrations if self.integrations else "Ninguna"
         return (
             f"[bold]Jarvis Stats[/bold]\n"
             f"CPU: {self.cpu:.1f}%\n"
@@ -56,7 +58,8 @@ class InfoPanel(Static):
             f"Memory: {self.memory_entries}\n"
             f"Corrections: {self.corrections}\n"
             f"Uptime: {self.uptime}\n"
-            f"{mic_icon}\n"
+            f"{mic_icon}\n\n"
+            f"[bold]Integraciones:[/bold]\n{integrations_display}\n"
         )
 
     def update_info(self):
@@ -70,6 +73,7 @@ class InfoPanel(Static):
     def watch_ai_engine(self, ai_engine): self.update_info()
     def watch_memory_entries(self, memory_entries): self.update_info()
     def watch_corrections(self, corrections): self.update_info()
+    def watch_integrations(self, integrations): self.update_info()
 
 class JarvisApp(App):
     CSS = """
@@ -131,6 +135,11 @@ class JarvisApp(App):
             self.memory_entries = memory_entries
             self.corrections = corrections
 
+    class IntegrationsEvent(Message):
+        def __init__(self, integrations: str):
+            super().__init__()
+            self.integrations = integrations
+
     def __init__(self):
         super().__init__()
         self.start_time = time.time()
@@ -163,6 +172,10 @@ class JarvisApp(App):
         self.chat_log.append_message("Jarvis ready. Say 'Oye Jarvis' or type a command.", sender="System")
         self.set_focus(self.input_field)
         self._is_ready = True
+
+    def on_integrations_event(self, event: IntegrationsEvent):
+        self.info_panel.integrations = event.integrations
+
 
     def refresh_stats(self):
         cpu = psutil.cpu_percent()

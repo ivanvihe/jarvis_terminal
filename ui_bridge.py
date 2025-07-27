@@ -81,9 +81,11 @@ class UIBridge:
             self.app.post_message(self.app.MemoryInfoEvent(memory_entries, corrections))
 
     def show_integrations(self, capabilities_dict):
-        """Muestra en la UI las integraciones activas y sus capacidades"""
+        """Muestra integraciones activas en el sidebar"""
         if self.ready:
             try:
-                self.app.post_message(self.app.IntegrationsEvent(capabilities_dict))
+                names = list(capabilities_dict.keys())
+                integrations_str = "\n".join(f"• {name}" for name in names) if names else "Ninguna"
+                self.app.post_message(self.app.IntegrationsEvent(integrations_str))
             except Exception as e:
                 print(f"⚠️ Error enviando IntegrationsEvent: {e}")

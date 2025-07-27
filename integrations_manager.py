@@ -1,5 +1,3 @@
-# integrations_manager.py - Gestor de integraciones y MCPs
-
 import os
 import importlib
 import json
@@ -109,10 +107,12 @@ class IntegrationsManager:
             module_path = f"{modules_dir}.{module_name}"
             module = importlib.import_module(module_path)
             
-            # Buscar clase de integración
-            integration_class = getattr(module, f"{module_name.title()}Integration", None)
+            # Convertir nombre módulo a PascalCase para buscar clase
+            integration_class_name = ''.join(word.capitalize() for word in module_name.split('_')) + 'Integration'
+            integration_class = getattr(module, integration_class_name, None)
+            
             if not integration_class:
-                print(f"⚠️ No se encontró clase de integración en {module_name}")
+                print(f"⚠️ No se encontró clase de integración '{integration_class_name}' en {module_name}")
                 return False
             
             # Crear instancia

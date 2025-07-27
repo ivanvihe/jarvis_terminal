@@ -70,7 +70,10 @@ class JarvisAgent:
 
         # Mostrar integraciones cargadas
         capabilities = self.integrations_manager.get_all_capabilities()
-        self.ui.show_integrations(capabilities)
+        names = list(capabilities.keys())
+        integrations_str = "\n".join(f"• {name}" for name in names) if names else "Ninguna"
+        self.ui.show_integrations(integrations_str)
+
 
     def run(self):
         while not self.ui.ready:
