@@ -12,3 +12,4 @@ __pycache__/ui_bridge.cpython-313.pyc
 .env
 integrations/__pycache__/gmail.cpython-313.pyc
 integrations/__pycache__/windows_run.cpython-313.pyc
+integrations/__pycache__/windows_session.cpython-313.pyc
